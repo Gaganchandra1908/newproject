@@ -431,88 +431,133 @@ def create_tables():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+    create_admins_table()
     
     conn.commit()
     conn.close()
+
+def create_admins_table():
+    """Create the admins table to store admin user details"""
+    conn = get_conn()
+    c = conn.cursor()
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY,
+            username TEXT UNIQUE,
+            password_hash TEXT,
+            role TEXT,
+            name TEXT,
+            email TEXT,
+            address TEXT,
+            phone TEXT,
+            city TEXT,
+            state TEXT,
+            signup_date TEXT,
+            last_login TEXT,
+            notification_preferences TEXT,
+            is_autopay_enabled INTEGER DEFAULT 0
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+# def migrate_database():
+#     """Add new columns to existing tables"""
+#     if meta_get(DB_MIGRATION_FLAG) == '1':
+#         return
+    
+#     # Add new columns to users table
+#     add_column_if_not_exists('users', 'city', 'TEXT')
+#     add_column_if_not_exists('users', 'state', 'TEXT')
+#     add_column_if_not_exists('users', 'signup_date', 'TEXT')
+#     add_column_if_not_exists('users', 'last_login', 'TEXT')
+#     add_column_if_not_exists('users', 'notification_preferences', 'TEXT', "'email,sms'")
+    
+#     # Add new columns to plans table
+#     add_column_if_not_exists('plans', 'plan_type', 'TEXT', "'basic'")
+#     add_column_if_not_exists('plans', 'is_unlimited', 'INTEGER', '0')
+#     add_column_if_not_exists('plans', 'created_date', 'TEXT')
+#     add_column_if_not_exists('plans', 'features', 'TEXT')
+#     add_column_if_not_exists('plans', 'upload_speed_mbps', 'INTEGER')
+    
+#     # Add new columns to subscriptions table
+#     add_column_if_not_exists('subscriptions', 'created_date', 'TEXT')
+#     add_column_if_not_exists('subscriptions', 'cancelled_date', 'TEXT')
+#     add_column_if_not_exists('subscriptions', 'cancellation_reason', 'TEXT')
+#     add_column_if_not_exists('subscriptions', 'renewal_count', 'INTEGER', '0')
+    
+#     # Add new columns to payments table
+#     add_column_if_not_exists('payments', 'payment_method', 'TEXT', "'credit_card'")
+#     add_column_if_not_exists('payments', 'late_fee', 'REAL', '0')
+#     add_column_if_not_exists('payments', 'discount', 'REAL', '0')
+#     add_column_if_not_exists('payments', 'tax_amount', 'REAL', '0')
+#     add_column_if_not_exists('payments', 'transaction_id', 'TEXT')
+    
+#     # Add new columns to usage table
+#     add_column_if_not_exists('usage', 'peak_hour_usage', 'REAL')
+#     add_column_if_not_exists('usage', 'off_peak_usage', 'REAL')
+#     add_column_if_not_exists('usage', 'upload_usage', 'REAL')
+#     add_column_if_not_exists('usage', 'average_speed', 'REAL')
+    
+#     # Create support tickets table
+#     try:
+#         conn = get_conn()
+#         c = conn.cursor()
+#         c.execute('''
+#             CREATE TABLE IF NOT EXISTS support_tickets (
+#                 id INTEGER PRIMARY KEY,
+#                 user_id INTEGER,
+#                 subject TEXT,
+#                 description TEXT,
+#                 category TEXT,
+#                 status TEXT,
+#                 priority TEXT,
+#                 created_date TEXT,
+#                 resolved_date TEXT,
+#                 FOREIGN KEY(user_id) REFERENCES users(id)
+#             )
+#         ''')
+#         conn.commit()
+#         conn.close()
+#     except Exception as e:
+#         print(f"Error creating support_tickets table: {e}")
+    
+#     # Update existing users with signup_date if missing
+#     try:
+#         users_without_signup = exec_query(
+#             "SELECT id FROM users WHERE signup_date IS NULL OR signup_date = ''", 
+#             fetch=True
+#         )
+#         if users_without_signup:
+#             default_date = (datetime.utcnow() - timedelta(days=30)).isoformat()
+#             for user_row in users_without_signup:
+#                 exec_query(
+#                     "UPDATE users SET signup_date = ? WHERE id = ?", 
+#                     (default_date, user_row[0])
+#                 )
+#     except Exception as e:
+#         print(f"Error updating signup dates: {e}")
+    
+#     meta_set(DB_MIGRATION_FLAG, '1')
+
 
 def migrate_database():
     """Add new columns to existing tables"""
     if meta_get(DB_MIGRATION_FLAG) == '1':
         return
     
-    # Add new columns to users table
-    add_column_if_not_exists('users', 'city', 'TEXT')
-    add_column_if_not_exists('users', 'state', 'TEXT')
-    add_column_if_not_exists('users', 'signup_date', 'TEXT')
-    add_column_if_not_exists('users', 'last_login', 'TEXT')
-    add_column_if_not_exists('users', 'notification_preferences', 'TEXT', "'email,sms'")
+    # ... existing migration code ...
     
-    # Add new columns to plans table
-    add_column_if_not_exists('plans', 'plan_type', 'TEXT', "'basic'")
-    add_column_if_not_exists('plans', 'is_unlimited', 'INTEGER', '0')
-    add_column_if_not_exists('plans', 'created_date', 'TEXT')
-    add_column_if_not_exists('plans', 'features', 'TEXT')
-    add_column_if_not_exists('plans', 'upload_speed_mbps', 'INTEGER')
+    # Create admins table if it doesn't exist
+    create_admins_table()
     
-    # Add new columns to subscriptions table
-    add_column_if_not_exists('subscriptions', 'created_date', 'TEXT')
-    add_column_if_not_exists('subscriptions', 'cancelled_date', 'TEXT')
-    add_column_if_not_exists('subscriptions', 'cancellation_reason', 'TEXT')
-    add_column_if_not_exists('subscriptions', 'renewal_count', 'INTEGER', '0')
-    
-    # Add new columns to payments table
-    add_column_if_not_exists('payments', 'payment_method', 'TEXT', "'credit_card'")
-    add_column_if_not_exists('payments', 'late_fee', 'REAL', '0')
-    add_column_if_not_exists('payments', 'discount', 'REAL', '0')
-    add_column_if_not_exists('payments', 'tax_amount', 'REAL', '0')
-    add_column_if_not_exists('payments', 'transaction_id', 'TEXT')
-    
-    # Add new columns to usage table
-    add_column_if_not_exists('usage', 'peak_hour_usage', 'REAL')
-    add_column_if_not_exists('usage', 'off_peak_usage', 'REAL')
-    add_column_if_not_exists('usage', 'upload_usage', 'REAL')
-    add_column_if_not_exists('usage', 'average_speed', 'REAL')
-    
-    # Create support tickets table
-    try:
-        conn = get_conn()
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS support_tickets (
-                id INTEGER PRIMARY KEY,
-                user_id INTEGER,
-                subject TEXT,
-                description TEXT,
-                category TEXT,
-                status TEXT,
-                priority TEXT,
-                created_date TEXT,
-                resolved_date TEXT,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            )
-        ''')
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"Error creating support_tickets table: {e}")
-    
-    # Update existing users with signup_date if missing
-    try:
-        users_without_signup = exec_query(
-            "SELECT id FROM users WHERE signup_date IS NULL OR signup_date = ''", 
-            fetch=True
-        )
-        if users_without_signup:
-            default_date = (datetime.utcnow() - timedelta(days=30)).isoformat()
-            for user_row in users_without_signup:
-                exec_query(
-                    "UPDATE users SET signup_date = ? WHERE id = ?", 
-                    (default_date, user_row[0])
-                )
-    except Exception as e:
-        print(f"Error updating signup dates: {e}")
+    # Move default admin to admins table if it exists in users table
+    ensure_default_admin()
     
     meta_set(DB_MIGRATION_FLAG, '1')
+
 
 def hash_password(password: str) -> str:
     salt = SALT + uuid.uuid4().hex
@@ -527,21 +572,41 @@ def verify_password(password: str, stored: str) -> bool:
     calc = hashlib.sha256((salt + password).encode()).hexdigest()
     return calc == h
 
+# def ensure_default_admin():
+#     r = exec_query("SELECT * FROM users WHERE username = ?", ("admin",), fetch=True)
+#     if len(r) == 0:
+#         pw = hash_password("admin123")
+#         signup_date = (datetime.utcnow() - timedelta(days=365)).isoformat()
+#         if column_exists('users', 'signup_date'):
+#             exec_query(
+#                 "INSERT INTO users (username, password_hash, role, name, email, signup_date, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+#                 ("admin", pw, "admin", "Administrator", "admin@example.com", signup_date, "Mumbai", "Maharashtra"),
+#             )
+#         else:
+#             exec_query(
+#                 "INSERT INTO users (username, password_hash, role, name, email) VALUES (?, ?, ?, ?, ?)",
+#                 ("admin", pw, "admin", "Administrator", "admin@example.com"),
+#             )
+
 def ensure_default_admin():
-    r = exec_query("SELECT * FROM users WHERE username = ?", ("admin",), fetch=True)
+    # Check if default admin exists in admins table
+    r = exec_query("SELECT * FROM admins WHERE username = ?", ("admin",), fetch=True)
     if len(r) == 0:
         pw = hash_password("admin123")
         signup_date = (datetime.utcnow() - timedelta(days=365)).isoformat()
-        if column_exists('users', 'signup_date'):
-            exec_query(
-                "INSERT INTO users (username, password_hash, role, name, email, signup_date, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                ("admin", pw, "admin", "Administrator", "admin@example.com", signup_date, "Mumbai", "Maharashtra"),
-            )
-        else:
-            exec_query(
-                "INSERT INTO users (username, password_hash, role, name, email) VALUES (?, ?, ?, ?, ?)",
-                ("admin", pw, "admin", "Administrator", "admin@example.com"),
-            )
+        
+        # Create in admins table
+        exec_query(
+            "INSERT INTO admins (username, password_hash, role, name, email, signup_date, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            ("admin", pw, "admin", "Administrator", "admin@example.com", signup_date, "Mumbai", "Maharashtra"),
+        )
+    
+    # Also check if default admin exists in users table and remove if found
+    r = exec_query("SELECT * FROM users WHERE username = ?", ("admin",), fetch=True)
+    if r:
+        exec_query("DELETE FROM users WHERE username = ?", ("admin",))
+
+
 
 def meta_get(k):
     r = exec_query("SELECT v FROM meta WHERE k = ?", (k,), fetch=True)
@@ -890,21 +955,59 @@ def signup(username, password, name, email):
     except Exception as e:
         return False, str(e)
 
+# def signin(username, password):
+#     r = exec_query("SELECT * FROM users WHERE username = ?", (username,), fetch=True)
+#     if not r:
+#         return False, "No such user"
+#     row = r[0]
+#     if verify_password(password, row[2]):
+#         # Update last login if column exists
+#         if column_exists('users', 'last_login'):
+#             exec_query("UPDATE users SET last_login = ? WHERE id = ?", (utcnow_naive().isoformat(), row[0]))
+#         return True, row_to_dict(row)
+#     return False, "Invalid credentials"
+
 def signin(username, password):
+    # First check users table
     r = exec_query("SELECT * FROM users WHERE username = ?", (username,), fetch=True)
-    if not r:
-        return False, "No such user"
-    row = r[0]
-    if verify_password(password, row[2]):
-        # Update last login if column exists
-        if column_exists('users', 'last_login'):
-            exec_query("UPDATE users SET last_login = ? WHERE id = ?", (utcnow_naive().isoformat(), row[0]))
-        return True, row_to_dict(row)
+    if r:
+        row = r[0]
+        if verify_password(password, row[2]):
+            # Update last login if column exists
+            if column_exists('users', 'last_login'):
+                exec_query("UPDATE users SET last_login = ? WHERE id = ?", (utcnow_naive().isoformat(), row[0]))
+            return True, row_to_dict(row)
+    
+    # Then check admins table
+    r = exec_query("SELECT * FROM admins WHERE username = ?", (username,), fetch=True)
+    if r:
+        row = r[0]
+        if verify_password(password, row[2]):
+            # Update last login if column exists
+            if column_exists('admins', 'last_login'):
+                exec_query("UPDATE admins SET last_login = ? WHERE id = ?", (utcnow_naive().isoformat(), row[0]))
+            return True, row_to_dict(row)
+    
     return False, "Invalid credentials"
 
+
+# def get_user_by_id(uid):
+#     r = exec_query("SELECT * FROM users WHERE id = ?", (uid,), fetch=True)
+#     return row_to_dict(r[0]) if r else None
+
 def get_user_by_id(uid):
+    # First check users table
     r = exec_query("SELECT * FROM users WHERE id = ?", (uid,), fetch=True)
-    return row_to_dict(r[0]) if r else None
+    if r:
+        return row_to_dict(r[0])
+    
+    # Then check admins table
+    r = exec_query("SELECT * FROM admins WHERE id = ?", (uid,), fetch=True)
+    if r:
+        return row_to_dict(r[0])
+    
+    return None
+
 
 def get_all_plans():
     rows = exec_query("SELECT * FROM plans ORDER BY price ASC", fetch=True)
@@ -1147,6 +1250,67 @@ def bulk_create_plans_from_csv(csv_data):
     except Exception as e:
         return False, f"Error processing CSV: {str(e)}"
 
+
+def transfer_user_to_admin(user_id):
+    """Transfer a user from users table to admins table"""
+    # Get user details
+    user = exec_query("SELECT * FROM users WHERE id = ?", (user_id,), fetch=True)
+    if not user:
+        return False, "User not found"
+    
+    user_data = row_to_dict(user[0])
+    
+    # Insert into admins table
+    columns = ', '.join(user_data.keys())
+    placeholders = ', '.join(['?'] * len(user_data))
+    values = tuple(user_data.values())
+    
+    try:
+        exec_query(f"INSERT INTO admins ({columns}) VALUES ({placeholders})", values)
+        
+        # Delete from users table
+        exec_query("DELETE FROM users WHERE id = ?", (user_id,))
+        
+        return True, "User successfully transferred to admin"
+    except Exception as e:
+        return False, f"Error transferring user to admin: {str(e)}"
+
+def remove_admin_from_user(admin_id):
+    """Remove admin role and move back to users table"""
+    # Check if it's the default admin
+    admin = exec_query("SELECT username FROM admins WHERE id = ?", (admin_id,), fetch=True)
+    if admin and admin[0][0] == "admin":
+        return False, "Cannot remove default admin"
+    
+    # Get admin details
+    admin_data = exec_query("SELECT * FROM admins WHERE id = ?", (admin_id,), fetch=True)
+    if not admin_data:
+        return False, "Admin not found"
+    
+    admin_dict = row_to_dict(admin_data[0])
+    
+    # Change role to user
+    admin_dict['role'] = 'user'
+    
+    # Insert into users table
+    columns = ', '.join(admin_dict.keys())
+    placeholders = ', '.join(['?'] * len(admin_dict))
+    values = tuple(admin_dict.values())
+    
+    try:
+        exec_query(f"INSERT INTO users ({columns}) VALUES ({placeholders})", values)
+        
+        # Delete from admins table
+        exec_query("DELETE FROM admins WHERE id = ?", (admin_id,))
+        
+        return True, "Admin successfully removed and moved to users"
+    except Exception as e:
+        return False, f"Error removing admin: {str(e)}"
+
+def get_all_admins():
+    """Get all admin users"""
+    rows = exec_query("SELECT * FROM admins ORDER BY id", fetch=True)
+    return [row_to_dict(r) for r in rows] if rows else []
 
 # ---------------------------
 # ML Model Functions (Enhanced)
@@ -2908,6 +3072,94 @@ def render_user_management():
             ok, msg = admin_delete_user(uid)
             (st.success if ok else st.error)(msg)
             if ok: st.rerun()
+        
+    # Admin User Management Section
+    st.subheader("User Management")
+
+    # Create tabs for Make Admin and Admins
+    tab1, tab2 = st.tabs(["Make Admin", "Admins"])
+
+    with tab1:
+        st.write("### Make User an Admin")
+        
+        # Search functionality
+        search_option = st.selectbox("Search by", ["User ID", "Username"])
+        search_query = st.text_input(f"Enter {search_option}")
+        
+        if search_query:
+            if search_option == "User ID":
+                # Search by user ID
+                user = exec_query("SELECT id, username, name, email, city, state FROM users WHERE id = ? AND role = 'user'", (search_query,), fetch=True)
+            else:
+                # Search by username
+                user = exec_query("SELECT id, username, name, email, city, state FROM users WHERE username = ? AND role = 'user'", (search_query,), fetch=True)
+            
+            if user:
+                user_data = row_to_dict(user[0])
+                
+                # Display user details in a card
+                st.markdown('<div class="plan-card">', unsafe_allow_html=True)
+                st.write(f"**User ID:** {user_data['id']}")
+                st.write(f"**Username:** {user_data['username']}")
+                st.write(f"**Name:** {user_data['name']}")
+                st.write(f"**Email:** {user_data['email']}")
+                st.write(f"**City:** {user_data.get('city', 'N/A')}")
+                st.write(f"**State:** {user_data.get('state', 'N/A')}")
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Make Admin button
+                if st.button("Make Admin", key=f"make_admin_{user_data['id']}"):
+                    success, message = transfer_user_to_admin(user_data['id'])
+                    if success:
+                        st.success(message)
+                        st.rerun()
+                    else:
+                        st.error(message)
+            else:
+                st.warning(f"No user found with {search_option}: {search_query}")
+        else:
+            st.info("Enter a User ID or Username to search for a user to make an admin.")
+
+    with tab2:
+        st.write("### Admins")
+        admins = get_all_admins()
+        
+        if admins:
+            # Convert to DataFrame for better display
+            admins_df = pd.DataFrame(admins)
+            
+            # Display with action buttons
+            for i, row in admins_df.iterrows():
+                cols = st.columns([1, 2, 2, 3, 2, 2, 1])
+                with cols[0]:
+                    st.write(row['id'])
+                with cols[1]:
+                    st.write(row['username'])
+                with cols[2]:
+                    st.write(row['name'])
+                with cols[3]:
+                    st.write(row['email'])
+                with cols[4]:
+                    st.write(row.get('city', ''))
+                with cols[5]:
+                    st.write(row.get('state', ''))
+                with cols[6]:
+                    if row['username'] == 'admin':
+                        st.write("Default Admin")
+                    else:
+                        if st.button("Remove Admin", key=f"remove_admin_{row['id']}"):
+                            success, message = remove_admin_from_user(row['id'])
+                            if success:
+                                st.success(message)
+                                st.rerun()
+                            else:
+                                st.error(message)
+        else:
+            st.write("No admins found.")
+
+    
+
+
 
     st.subheader("Send Notifications to Users")
 
