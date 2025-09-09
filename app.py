@@ -1272,70 +1272,197 @@ def engineer_features(df):
     
     return df
 
+# def train_recommendation_model():
+#     """Train the ML model for plan recommendation"""
+#     training_data = collect_training_data()
+#     if training_data.empty:
+#         st.error("Not enough data to train the model")
+#         return None
+    
+#     training_data = engineer_features(training_data)
+    
+#     # Define features and target
+#     feature_columns = [
+#         'avg_daily_usage', 'max_daily_usage', 'usage_std',
+#         'estimated_monthly_usage', 'days_since_signup',
+#         'weekday_avg', 'weekend_avg', 'usage_consistency',
+#         'city', 'state'
+#     ]
+    
+#     target_column = 'plan_category'
+    
+#     X = training_data[feature_columns]
+#     y = training_data[target_column]
+    
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+#     # Preprocessing
+#     numeric_features = ['avg_daily_usage', 'max_daily_usage', 'usage_std', 
+#                       'estimated_monthly_usage', 'days_since_signup',
+#                       'weekday_avg', 'weekend_avg', 'usage_consistency']
+#     categorical_features = ['city', 'state']
+    
+#     preprocessor = ColumnTransformer(
+#         transformers=[
+#             ('num', StandardScaler(), numeric_features),
+#             ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
+#         ])
+    
+#     # Create model pipeline
+#     model = Pipeline(steps=[
+#         ('preprocessor', preprocessor),
+#         ('classifier', RandomForestClassifier(n_estimators=150, random_state=42, max_depth=10))
+#     ])
+    
+#     # Train model
+#     progress_bar = st.progress(0)
+#     status_text = st.empty()
+    
+#     status_text.text("Training enhanced recommendation model...")
+#     progress_bar.progress(25)
+    
+#     model.fit(X_train, y_train)
+#     progress_bar.progress(75)
+    
+#     y_pred = model.predict(X_test)
+#     accuracy = accuracy_score(y_test, y_pred)
+#     accuracy_percent = accuracy * 100
+    
+#     progress_bar.progress(100)
+#     status_text.text("Model training completed!")
+    
+#     st.success(f"Model accuracy: {accuracy_percent:.1f}%")
+    
+#     # Save model
+#     joblib.dump(model, 'plan_recommendation_model.pkl')
+#     return model
+
 def train_recommendation_model():
-    """Train the ML model for plan recommendation"""
-    training_data = collect_training_data()
-    if training_data.empty:
-        st.error("Not enough data to train the model")
-        return None
-    
-    training_data = engineer_features(training_data)
-    
-    # Define features and target
-    feature_columns = [
-        'avg_daily_usage', 'max_daily_usage', 'usage_std',
-        'estimated_monthly_usage', 'days_since_signup',
-        'weekday_avg', 'weekend_avg', 'usage_consistency',
-        'city', 'state'
-    ]
-    
-    target_column = 'plan_category'
-    
-    X = training_data[feature_columns]
-    y = training_data[target_column]
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Preprocessing
-    numeric_features = ['avg_daily_usage', 'max_daily_usage', 'usage_std', 
-                      'estimated_monthly_usage', 'days_since_signup',
-                      'weekday_avg', 'weekend_avg', 'usage_consistency']
-    categorical_features = ['city', 'state']
-    
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', StandardScaler(), numeric_features),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
+    """Train a recommendation model for plan suggestions"""
+    try:
+        # Collect training data
+        df = collect_training_data()
+        
+        if df.empty:
+            st.error("No training data available. Please ensure there is subscription data.")
+            return None
+        
+        # Check if required columns exist, if not add them with default values
+        required_columns = ['city', 'state', 'signup_date', 'start_date', 'end_date', 'plan_id', 'plan_type']
+        for col in required_columns:
+            if col not in df.columns:
+                if col == 'city':
+                    df[col] = 'Unknown'
+                elif col == 'state':
+                    df[col] = 'Unknown'
+                elif col == 'signup_date':
+                    df[col] = datetime.utcnow().isoformat()
+                elif col == 'start_date':
+                    df[col] = datetime.utcnow().isoformat()
+                elif col == 'end_date':
+                    df[col] = (datetime.utcnow() + timedelta(days=30)).isoformat()
+                elif col == 'plan_id':
+                    df[col] = 1  # Default to first plan
+                elif col == 'plan_type':
+                    df[col] = 'basic'
+        
+        # Remove rows where target (plan_id) is NaN
+        df = df.dropna(subset=['plan_id'])
+        
+        if df.empty:
+            st.error("No valid training data available after removing missing target values.")
+            return None
+        
+        # Feature engineering with robust date parsing
+        # Convert date columns with multiple format attempts
+        date_columns = ['signup_date', 'start_date', 'end_date']
+        for col in date_columns:
+            # Try parsing with different formats
+            try:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+            except:
+                df[col] = pd.to_datetime(df[col], format='mixed', errors='coerce')
+            
+            # Fill any remaining NaT values with current date
+            df[col] = df[col].fillna(datetime.utcnow())
+        
+        # Calculate durations
+        df['subscription_duration'] = (df['end_date'] - df['start_date']).dt.days
+        df['user_tenure'] = (datetime.utcnow() - df['signup_date']).dt.days
+        
+        # Handle any NaN values in the calculated durations
+        df['subscription_duration'] = df['subscription_duration'].fillna(30)  # Default to 30 days
+        df['user_tenure'] = df['user_tenure'].fillna(365)  # Default to 1 year
+        
+        # Prepare features and target
+        feature_cols = ['city', 'state', 'subscription_duration', 'user_tenure', 'plan_type']
+        target_col = 'plan_id'
+        
+        # Handle NaN values - this is the key fix
+        # For numeric columns, fill with median
+        numeric_cols = ['subscription_duration', 'user_tenure']
+        for col in numeric_cols:
+            if col in df.columns:
+                median_val = df[col].median()
+                # If median is NaN (all values are NaN), fill with 0
+                if pd.isna(median_val):
+                    median_val = 0
+                df[col].fillna(median_val, inplace=True)
+        
+        # For categorical columns, fill with mode or a default value
+        categorical_cols = ['city', 'state', 'plan_type']
+        for col in categorical_cols:
+            if col in df.columns:
+                try:
+                    mode_val = df[col].mode()[0] if len(df[col].mode()) > 0 else 'unknown'
+                    df[col].fillna(mode_val, inplace=True)
+                except:
+                    df[col].fillna('unknown', inplace=True)
+        
+        # Prepare data
+        X = df[feature_cols]
+        y = df[target_col]
+        
+        # Preprocessing pipeline
+        numeric_features = ['subscription_duration', 'user_tenure']
+        categorical_features = ['city', 'state', 'plan_type']
+        
+        numeric_transformer = StandardScaler()
+        categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+        
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', numeric_transformer, numeric_features),
+                ('cat', categorical_transformer, categorical_features)
+            ])
+        
+        # Create model pipeline
+        model = Pipeline(steps=[
+            ('preprocessor', preprocessor),
+            ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))
         ])
+        
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Train model
+        model.fit(X_train, y_train)
+        
+        # Evaluate model
+        y_pred = model.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        st.success(f"Model trained successfully with accuracy: {accuracy:.2f}")
+        
+        # Save model
+        joblib.dump(model, 'recommendation_model.joblib')
+        
+        return model
     
-    # Create model pipeline
-    model = Pipeline(steps=[
-        ('preprocessor', preprocessor),
-        ('classifier', RandomForestClassifier(n_estimators=150, random_state=42, max_depth=10))
-    ])
-    
-    # Train model
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    
-    status_text.text("Training enhanced recommendation model...")
-    progress_bar.progress(25)
-    
-    model.fit(X_train, y_train)
-    progress_bar.progress(75)
-    
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    accuracy_percent = accuracy * 100
-    
-    progress_bar.progress(100)
-    status_text.text("Model training completed!")
-    
-    st.success(f"Model accuracy: {accuracy_percent:.1f}%")
-    
-    # Save model
-    joblib.dump(model, 'plan_recommendation_model.pkl')
-    return model
+    except Exception as e:
+        st.error(f"Error training model: {str(e)}")
+        return None
+
 
 def ml_recommendation_for_user(user_id, num_recommendations=3):
     """Enhanced ML-based plan recommendation"""
@@ -1651,8 +1778,8 @@ def render_metric_card(title, value, delta=None, delta_color="normal"):
     
     st.markdown(f"""
     <div class="metric-card">
-        <h4 style="color: black; margin: 0;">{title}</h4>
-        <h2 style="color: black; margin: 0.5rem 0;">{value}</h2>
+        <h4 style="color: white; margin: 0; height : 5px ; width:400px;">{title}</h4>
+        <h2 style="color: white; margin: 0.5rem 0; height : 50px ; width : 400px;">{value}</h2>
         {delta_html}
     </div>
     """, unsafe_allow_html=True)
@@ -2139,7 +2266,52 @@ def user_dashboard(user):
             
             with col2:
                 render_plan_card(current_plan, is_current=True, show_actions=False)
-        
+            
+            # Quick action cards row
+            # Quick action cards row
+            col1, col2, col3, col4 = st.columns(4)
+
+            card_style = """
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 16px;
+                padding: 2rem 1rem;
+                text-align: center;
+                color: white;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                height: 180px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            ">
+                <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem;">{title}</div>
+                <button style="
+                    border: none;
+                    border-radius: 8px;
+                    padding: 0.5rem 1.5rem;
+                    background: white;
+                    color: #4f46e5;
+                    font-weight: 600;
+                    cursor: pointer;
+                ">{btn_text}</button>
+            </div>
+            """
+
+            with col1:
+                st.markdown(card_style.format(title="📶 My WiFi", btn_text="Manage"), unsafe_allow_html=True)
+
+            with col2:
+                st.markdown(card_style.format(title="🆕 New Connection", btn_text="Apply"), unsafe_allow_html=True)
+
+            with col3:
+                st.markdown(card_style.format(title="💳 Pay Bills", btn_text="Pay Now"), unsafe_allow_html=True)
+
+            with col4:
+                st.markdown(card_style.format(title="🛠️ Support", btn_text="Get Help"), unsafe_allow_html=True)
+
+
+
         except Exception as e:
             render_plan_card(current_plan, is_current=True, show_actions=False)
         
