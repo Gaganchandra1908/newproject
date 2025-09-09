@@ -984,22 +984,70 @@ def get_usage_for_user(user_id, days=30):
     data = [tuple(r) for r in rows]
     return pd.DataFrame(data, columns=cols)
 
-def get_user_notifications(user_id, limit=10):
-    """Get recent notifications for a user"""
+# def get_user_notifications(user_id, limit=10):
+#     """Get recent notifications for a user"""
+#     if not column_exists('notifications', 'created_date'):
+#         return []
+    
+#     rows = exec_query(
+#         "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_date DESC LIMIT ?",
+#         (user_id, limit),
+#         fetch=True
+#     )
+#     return [row_to_dict(r) for r in rows]
+
+def get_user_notifications(user_id, limit=10, unread_only=False):
+    """Get recent notifications for a user, optionally only unread ones"""
     if not column_exists('notifications', 'created_date'):
         return []
     
-    rows = exec_query(
-        "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_date DESC LIMIT ?",
-        (user_id, limit),
-        fetch=True
-    )
+    base_query = "SELECT * FROM notifications WHERE user_id = ?"
+    params = [user_id]
+    
+    if unread_only:
+        base_query += " AND is_read = 0"
+    
+    base_query += " ORDER BY created_date DESC LIMIT ?"
+    params.append(limit)
+    
+    rows = exec_query(base_query, tuple(params), fetch=True)
     return [row_to_dict(r) for r in rows]
 
 def mark_notification_read(notification_id):
     """Mark a notification as read"""
     if column_exists('notifications', 'is_read'):
         exec_query("UPDATE notifications SET is_read = 1 WHERE id = ?", (notification_id,))
+
+def send_message_to_users(audience, message):
+    """Send a message to selected users (active, inactive, or all)"""
+    # Determine user IDs based on audience
+    if audience == "Active Users":
+        query = """
+            SELECT DISTINCT u.id FROM users u
+            JOIN subscriptions s ON u.id = s.user_id
+            WHERE s.status = 'active'
+        """
+    elif audience == "Inactive Users":
+        query = """
+            SELECT DISTINCT u.id FROM users u
+            JOIN subscriptions s ON u.id = s.user_id
+            WHERE u.id NOT IN (
+                SELECT DISTINCT user_id FROM subscriptions WHERE status = 'active'
+            )
+        """
+    else:  # All Users
+        query = "SELECT id FROM users WHERE role = 'user'"
+    
+    user_ids = [row[0] for row in exec_query(query, fetch=True)]
+    
+    # Insert a notification for each user
+    for user_id in user_ids:
+        exec_query(
+            "INSERT INTO notifications (user_id, message, notification_type, created_date) VALUES (?, ?, ?, ?)",
+            (user_id, message, "admin_message", utcnow_naive().isoformat())
+        )
+    
+    return len(user_ids)
 
 def check_expiry_reminders(user_id):
     """Check if user has any expiry reminders"""
@@ -1098,6 +1146,7 @@ def bulk_create_plans_from_csv(csv_data):
         
     except Exception as e:
         return False, f"Error processing CSV: {str(e)}"
+
 
 # ---------------------------
 # ML Model Functions (Enhanced)
@@ -1455,6 +1504,41 @@ def admin_create_user(username, password, name, email, role='user', city=None, s
     exec_query(f"INSERT INTO users ({','.join(cols)}) VALUES ({placeholders})", tuple(vals))
     return True, "User created."
 
+# def admin_send_message(message, target='all'):
+    """
+    Send a custom message from admin to active, inactive, or all users.
+    target: 'active', 'inactive', or 'all'
+    """
+    now = utcnow_naive().isoformat()
+
+    if target == 'active':
+        users = exec_query("""
+            SELECT DISTINCT u.id 
+            FROM users u 
+            JOIN subscriptions s ON u.id = s.user_id
+            WHERE s.status = 'active' AND u.role = 'user'
+        """, fetch=True)
+    elif target == 'inactive':
+        users = exec_query("""
+            SELECT DISTINCT u.id 
+            FROM users u 
+            LEFT JOIN subscriptions s ON u.id = s.user_id
+            WHERE (s.status IS NULL OR s.status != 'active') 
+              AND u.role = 'user'
+        """, fetch=True)
+    else:  # all users
+        users = exec_query("SELECT id FROM users WHERE role = 'user'", fetch=True)
+
+    for row in users:
+        uid = row[0]
+        exec_query(
+            "INSERT INTO notifications (user_id, message, notification_type, created_date) VALUES (?, ?, ?, ?)",
+            (uid, message, 'admin_broadcast', now)
+        )
+    return True, f"Message sent to {len(users)} users"
+
+
+
 def admin_update_user(user_id, **kwargs):
     # Only allow known columns
     allowed = {'username','name','email','role','city','state','phone','address','is_autopay_enabled','notification_preferences'}
@@ -1523,6 +1607,38 @@ def admin_delete_plan(plan_id):
     exec_query("DELETE FROM plans WHERE id = ?", (plan_id,))
     return True, "Plan deleted."
 
+def admin_send_message(message, target="all"):
+    """
+    Send a custom message from admin to users.
+    target: "all", "active", "inactive"
+    """
+    now = utcnow_naive().isoformat()
+
+    if target == "all":
+        user_rows = exec_query("SELECT id FROM users WHERE role = 'user'", fetch=True)
+    elif target == "active":
+        user_rows = exec_query("""
+            SELECT DISTINCT u.id 
+            FROM users u
+            JOIN subscriptions s ON u.id = s.user_id
+            WHERE u.role = 'user' AND s.status = 'active'
+        """, fetch=True)
+    elif target == "inactive":
+        user_rows = exec_query("""
+            SELECT id FROM users
+            WHERE role = 'user' AND id NOT IN (
+                SELECT user_id FROM subscriptions WHERE status = 'active'
+            )
+        """, fetch=True)
+    else:
+        return False, "Invalid target"
+
+    for row in user_rows:
+        exec_query(
+            "INSERT INTO notifications (user_id, message, notification_type, created_date) VALUES (?, ?, ?, ?)",
+            (row[0], message, "admin_broadcast", now)
+        )
+    return True, f"Message sent to {len(user_rows)} users."
 
 # ---------------------------
 # UI Components (Enhanced)
@@ -1965,6 +2081,21 @@ def render_billing_history(user_id):
 def user_dashboard(user):
     st.title("🏠 My Dashboard")
     st.markdown(f"Welcome back, **{user['name']}**!")
+    # Add this code in the user_dashboard function after the sidebar navigation links
+    st.sidebar.subheader("Notifications")
+
+    # Get unread notifications for the current user
+    unread_notifications = get_user_notifications(user['id'], limit=5, unread_only=True)
+
+    if unread_notifications:
+        for notification in unread_notifications:
+            with st.sidebar.expander(f"New: {notification['notification_type'].replace('_', ' ').title()}"):
+                st.write(notification['message'])
+                if st.button("Mark as read", key=f"mark_read_{notification['id']}"):
+                    mark_notification_read(notification['id'])
+                    st.rerun()  # Rerun to update the list
+    else:
+        st.sidebar.write("No new notifications")
     
     # Check for expiry reminders first
     reminders = check_expiry_reminders(user['id'])
@@ -2185,11 +2316,13 @@ def user_dashboard(user):
    
     
     # Section 6: Previous Buying History
-    st.markdown("---")
-    render_billing_history(user['id'])
+    # st.markdown("---")
+    # render_billing_history(user['id'])
+
+    
     
     # Additional sections for subscription history
-    st.markdown("---")
+    # st.markdown("---")
     st.markdown("### 📋 Subscription History")
     
     subscription_history = get_user_subscription_history(user['id'])
@@ -2263,6 +2396,9 @@ def admin_dashboard(user):
     
     with tabs[5]:
         render_admin_settings()
+
+    
+
 
 def render_analytics_dashboard():
     st.header("📊 Business Analytics")
@@ -2600,6 +2736,20 @@ def render_user_management():
             ok, msg = admin_delete_user(uid)
             (st.success if ok else st.error)(msg)
             if ok: st.rerun()
+
+    st.subheader("Send Notifications to Users")
+
+    with st.form("send_message_form"):
+        audience = st.selectbox("Send to", ["Active Users", "Inactive Users", "All Users"])
+        message = st.text_area("Message")
+        submit_button = st.form_submit_button("Send Message")
+        
+        if submit_button:
+            if not message:
+                st.error("Message cannot be empty")
+            else:
+                count = send_message_to_users(audience, message)
+                st.success(f"Message sent to {count} users!")
 
     # st.header("🎫 Support Ticket Management")
     
