@@ -474,6 +474,47 @@ def create_admins_table():
     conn.commit()
     conn.close()
 
+def create_wifi_table():
+    conn = sqlite3.connect('broadband.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS wifi_credentials (
+            user_id TEXT PRIMARY KEY,
+            wifi_username TEXT DEFAULT 'MyWiFi',
+            wifi_password TEXT DEFAULT 'password123'
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def get_wifi_credentials(user_id):
+    conn = sqlite3.connect('broadband.db')
+    c = conn.cursor()
+    c.execute("SELECT wifi_username, wifi_password FROM wifi_credentials WHERE user_id=?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return row[0], row[1]
+    else:
+        # insert default values if not found
+        set_wifi_credentials(user_id, "MyWiFi", "password123")
+        return "MyWiFi", "password123"
+
+
+def set_wifi_credentials(user_id, username, password):
+    conn = sqlite3.connect('broadband.db')
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO wifi_credentials (user_id, wifi_username, wifi_password)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            wifi_username=excluded.wifi_username,
+            wifi_password=excluded.wifi_password
+    ''', (user_id, username, password))
+    conn.commit()
+    conn.close()
+
+
 # def migrate_database():
 #     """Add new columns to existing tables"""
 #     if meta_get(DB_MIGRATION_FLAG) == '1':
@@ -1641,10 +1682,10 @@ def train_recommendation_model():
 
 def ml_recommendation_for_user(user_id, num_recommendations=3):
     """Enhanced ML-based plan recommendation"""
-    if not os.path.exists('plan_recommendation_model.pkl'):
+    if not os.path.exists('recommendation_model.joblib'):
         return advanced_recommendation_for_user(user_id, num_recommendations)
     
-    model = joblib.load('plan_recommendation_model.pkl')
+    model = joblib.load('recommendation_model.joblib')
     user = get_user_by_id(user_id)
     if not user:
         return []
@@ -3317,15 +3358,15 @@ def render_ml_model_management():
     # Model status
     col1, col2 = st.columns(2)
     with col1:
-        if os.path.exists('plan_recommendation_model.pkl'):
+        if os.path.exists('recommendation_model.joblib'):
             st.success("✅ ML Model: Active")
         else:
             st.warning("⚠️ ML Model: Not Trained")
     
     with col2:
         model_size = 0
-        if os.path.exists('plan_recommendation_model.pkl'):
-            model_size = os.path.getsize('plan_recommendation_model.pkl') / (1024 * 1024)  # MB
+        if os.path.exists('recommendation_model.joblib'):
+            model_size = os.path.getsize('recommendation_model.joblib') / (1024 * 1024)  # MB
             st.info(f"Model Size: {model_size:.2f} MB")
     
     # Training section
@@ -3340,17 +3381,17 @@ def render_ml_model_management():
                     st.success("Model trained successfully!")
                     st.rerun()
     
-    with col2:
-        if st.button("Evaluate Current Model", use_container_width=True):
-            if os.path.exists('plan_recommendation_model.pkl'):
-                evaluate_model()
-            else:
-                st.error("No model found to evaluate. Please train a model first.")
+    # with col2:
+    #     if st.button("Evaluate Current Model", use_container_width=True):
+    #         if os.path.exists('recommendation_model.joblib'):
+    #             evaluate_model()
+    #         else:
+    #             st.error("No model found to evaluate. Please train a model first.")
     
-    # Model performance metrics
-    if os.path.exists('plan_recommendation_model.pkl'):
-        st.subheader("Model Performance")
-        evaluate_model()
+    # # Model performance metrics
+    # if os.path.exists('recommendation_model.joblib'):
+    #     st.subheader("Model Performance")
+    #     evaluate_model()
 
 def render_enhanced_plans_management():
 
@@ -3826,97 +3867,149 @@ def render_admin_settings():
         db_size = os.path.getsize(DB_PATH) / (1024 * 1024) if os.path.exists(DB_PATH) else 0
         st.metric("Database Size", f"{db_size:.2f} MB")
         
-        if os.path.exists('plan_recommendation_model.pkl'):
-            model_size = os.path.getsize('plan_recommendation_model.pkl') / (1024 * 1024)
+        if os.path.exists('recommendation_model.joblib'):
+            model_size = os.path.getsize('recommendation_model.joblib') / (1024 * 1024)
             st.metric("ML Model Size", f"{model_size:.2f} MB")
 
-def evaluate_model():
-    """Evaluate the ML model performance"""
-    if not os.path.exists('plan_recommendation_model.pkl'):
-        st.error("No model found to evaluate")
-        return
+# def evaluate_model():
+#     """Evaluate the ML model performance"""
+#     if not os.path.exists('recommendation_model.joblib'):
+#         st.error("No model found to evaluate")
+#         return
     
-    try:
-        model = joblib.load('plan_recommendation_model.pkl')
-        training_data = collect_training_data()
+#     try:
+#         model = joblib.load('recommendation_model.joblib')
+#         training_data = collect_training_data()
         
-        if training_data.empty:
-            st.error("Not enough data to evaluate model")
-            return
+#         if training_data.empty:
+#             st.error("Not enough data to evaluate model")
+#             return
         
-        training_data = engineer_features(training_data)
+#         training_data = engineer_features(training_data)
         
-        feature_columns = [
-            'avg_daily_usage', 'max_daily_usage', 'usage_std',
-            'estimated_monthly_usage', 'days_since_signup',
-            'weekday_avg', 'weekend_avg', 'usage_consistency',
-            'city', 'state'
-        ]
+#         feature_columns = [
+#             'avg_daily_usage', 'max_daily_usage', 'usage_std',
+#             'estimated_monthly_usage', 'days_since_signup',
+#             'weekday_avg', 'weekend_avg', 'usage_consistency',
+#             'city', 'state'
+#         ]
         
-        # Check which features are actually available
-        available_features = [col for col in feature_columns if col in training_data.columns]
+#         # Check which features are actually available
+#         available_features = [col for col in feature_columns if col in training_data.columns]
         
-        if not available_features:
-            st.error("No suitable features available for evaluation")
-            return
+#         if not available_features:
+#             st.error("No suitable features available for evaluation")
+#             return
         
-        target_column = 'plan_category'
+#         target_column = 'plan_category'
         
-        X = training_data[available_features]
-        y = training_data[target_column]
+#         X = training_data[available_features]
+#         y = training_data[target_column]
         
-        # Make predictions
-        y_pred = model.predict(X)
+#         # Make predictions
+#         y_pred = model.predict(X)
         
-        # Display metrics
-        st.subheader("Model Performance Metrics")
+#         # Display metrics
+#         st.subheader("Model Performance Metrics")
         
-        accuracy = accuracy_score(y, y_pred)
-        accuracy_percent = accuracy * 100
+#         accuracy = accuracy_score(y, y_pred)
+#         accuracy_percent = accuracy * 100
         
-        st.metric("Model Accuracy", f"{accuracy_percent:.1f}%")
+#         st.metric("Model Accuracy", f"{accuracy_percent:.1f}%")
         
-        # Classification report
-        report = classification_report(y, y_pred, output_dict=True)
-        report_df = pd.DataFrame(report).transpose()
-        st.dataframe(report_df.style.format("{:.3f}"))
+#         # Classification report
+#         report = classification_report(y, y_pred, output_dict=True)
+#         report_df = pd.DataFrame(report).transpose()
+#         st.dataframe(report_df.style.format("{:.3f}"))
         
-        # Feature importance if available
-        if hasattr(model.named_steps['classifier'], 'feature_importances_'):
-            st.subheader("Feature Importance")
+#         # Feature importance if available
+#         if hasattr(model.named_steps['classifier'], 'feature_importances_'):
+#             st.subheader("Feature Importance")
             
-            # Get feature names after preprocessing
-            numeric_features = [col for col in ['avg_daily_usage', 'max_daily_usage', 'usage_std', 
-                              'estimated_monthly_usage', 'days_since_signup',
-                              'weekday_avg', 'weekend_avg', 'usage_consistency'] if col in available_features]
-            categorical_features = [col for col in ['city', 'state'] if col in available_features]
+#             # Get feature names after preprocessing
+#             numeric_features = [col for col in ['avg_daily_usage', 'max_daily_usage', 'usage_std', 
+#                               'estimated_monthly_usage', 'days_since_signup',
+#                               'weekday_avg', 'weekend_avg', 'usage_consistency'] if col in available_features]
+#             categorical_features = [col for col in ['city', 'state'] if col in available_features]
             
-            if categorical_features:
-                try:
-                    cat_encoder = model.named_steps['preprocessor'].named_transformers_['cat']
-                    cat_feature_names = cat_encoder.get_feature_names_out(categorical_features)
-                    all_features = numeric_features + list(cat_feature_names)
-                except:
-                    all_features = available_features
-            else:
-                all_features = numeric_features
+#             if categorical_features:
+#                 try:
+#                     cat_encoder = model.named_steps['preprocessor'].named_transformers_['cat']
+#                     cat_feature_names = cat_encoder.get_feature_names_out(categorical_features)
+#                     all_features = numeric_features + list(cat_feature_names)
+#                 except:
+#                     all_features = available_features
+#             else:
+#                 all_features = numeric_features
             
-            importances = model.named_steps['classifier'].feature_importances_
+#             importances = model.named_steps['classifier'].feature_importances_
             
-            if len(all_features) == len(importances):
-                feature_importance = pd.DataFrame({
-                    'Feature': all_features,
-                    'Importance': importances
-                }).sort_values('Importance', ascending=False)
+#             if len(all_features) == len(importances):
+#                 feature_importance = pd.DataFrame({
+#                     'Feature': all_features,
+#                     'Importance': importances
+#                 }).sort_values('Importance', ascending=False)
                 
-                fig = px.bar(feature_importance.head(10), x='Importance', y='Feature', 
-                           orientation='h', title="Top 10 Feature Importances")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Feature names and importances don't match. Skipping feature importance chart.")
+#                 fig = px.bar(feature_importance.head(10), x='Importance', y='Feature', 
+#                            orientation='h', title="Top 10 Feature Importances")
+#                 st.plotly_chart(fig, use_container_width=True)
+#             else:
+#                 st.info("Feature names and importances don't match. Skipping feature importance chart.")
         
-    except Exception as e:
-        st.error(f"Error evaluating model: {str(e)}")
+#     except Exception as e:
+#         st.error(f"Error evaluating model: {str(e)}")
+
+
+# def evaluate_model():
+#     """Evaluate the ML model performance"""
+#     if not os.path.exists('recommendation_model.joblib'):
+#         st.error("No model found to evaluate")
+#         return
+    
+#     try:
+#         model = joblib.load('recommendation_model.joblib')
+#         training_data = collect_training_data()
+        
+#         if training_data.empty:
+#             st.error("Not enough data to evaluate model")
+#             return
+        
+#         # Ensure same feature engineering as training
+#         required_columns = ['city', 'state', 'signup_date', 'start_date', 'end_date', 'plan_id', 'plan_type']
+#         for col in required_columns:
+#             if col not in training_data.columns:
+#                 training_data[col] = 'Unknown' if col in ['city', 'state', 'plan_type'] else datetime.utcnow().isoformat()
+        
+#         # Parse dates
+#         date_columns = ['signup_date', 'start_date', 'end_date']
+#         for col in date_columns:
+#             training_data[col] = pd.to_datetime(training_data[col], errors='coerce').fillna(datetime.utcnow())
+        
+#         # Feature engineering
+#         training_data['subscription_duration'] = (training_data['end_date'] - training_data['start_date']).dt.days.fillna(30)
+#         training_data['user_tenure'] = (datetime.utcnow() - training_data['signup_date']).dt.days.fillna(365)
+        
+#         feature_columns = ['city', 'state', 'subscription_duration', 'user_tenure', 'plan_type']
+#         target_column = 'plan_id'
+        
+#         X = training_data[feature_columns]
+#         y = training_data[target_column]
+        
+#         # Predictions
+#         y_pred = model.predict(X)
+        
+#         st.subheader("Model Performance Metrics")
+#         accuracy = accuracy_score(y, y_pred)
+#         st.metric("Model Accuracy", f"{accuracy*100:.1f}%")
+        
+#         report = classification_report(y, y_pred, output_dict=True)
+#         st.dataframe(pd.DataFrame(report).transpose().style.format("{:.3f}"))
+        
+#     except Exception as e:
+#         st.error(f"Error evaluating model: {str(e)}")
+
+
+
 
 # ---------------------------
 # Main Application
@@ -3931,6 +4024,7 @@ def main():
     
     load_css()
     create_tables()
+    create_wifi_table()
     migrate_database()
     ensure_default_admin()
     create_comprehensive_mock_data()
