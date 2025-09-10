@@ -89,10 +89,20 @@ def load_css():
         border-color: #667eea;
     }
     
+    # .recommended-plan {
+    #     border: 2px solid #10b981;
+    #     background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+    # }
+
     .recommended-plan {
-        border: 2px solid #10b981;
-        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
-    }
+            border: 2px solid #10b981;
+            background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+            padding: 1.25rem;            /* inner spacing */
+            border-radius: 12px;         /* rounded corners */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* subtle shadow */
+            margin-bottom: 1.5rem;       /* space before the buttons */
+        }
+
     
     .current-plan-card {
         background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
@@ -179,6 +189,7 @@ def load_css():
     /* Button Styling */
     .stButton > button {
         border-radius: 8px;
+        
         border: none;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -3097,6 +3108,9 @@ def user_dashboard(user):
             st.dataframe(history_df, use_container_width=True)
         else:
             st.info("No subscription history available.")
+
+
+
 
 
 # ---------------------------
