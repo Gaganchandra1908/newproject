@@ -2007,63 +2007,63 @@ def render_partial_circle_progress(days_left, start_date, end_date, pct_visible=
 
 
 
-def render_plan_card(plan, is_current=False, is_recommended=False, show_actions=True, current_user_id=None):
-    card_class = "current-plan-card" if is_current else "recommended-plan" if is_recommended else "plan-card"
+# def render_plan_card(plan, is_current=False, is_recommended=False, show_actions=True, current_user_id=None):
+#     card_class = "current-plan-card" if is_current else "recommended-plan" if is_recommended else "plan-card"
     
-    status_badge = ""
-    if is_current:
-        status_badge = '<span class="status-active">Current Plan</span>'
-    elif is_recommended:
-        status_badge = '<span class="status-active">Recommended</span>'
+#     status_badge = ""
+#     if is_current:
+#         status_badge = '<span class="status-active">Current Plan</span>'
+#     elif is_recommended:
+#         status_badge = '<span class="status-active">Recommended</span>'
     
-    # Enhanced plan features display
-    features_text = plan.get('features', '')
-    upload_speed = plan.get('upload_speed_mbps', plan['speed_mbps'] // 10)
+#     # Enhanced plan features display
+#     features_text = plan.get('features', '')
+#     upload_speed = plan.get('upload_speed_mbps', plan['speed_mbps'] // 10)
     
-    st.markdown(f"""
-    <div class="{card_class}">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-                <h3 style="margin: 0; color: #1f2937;">{plan['name']} {status_badge}</h3>
-                <p style="color: #6b7280; margin: 0.5rem 0;">{plan['description']}</p>
-                {f"<p style='color: #4f46e5; font-size: 0.9rem; margin: 0.5rem 0;'><strong>Features:</strong> {features_text}</p>" if features_text else ""}
-            </div>
-            <div style="text-align: right;">
-                <h2 style="margin: 0; color: #667eea;">₹{plan['price']}</h2>
-                <p style="color: #6b7280; margin: 0;">/month</p>
-            </div>
-        </div>
-        <div style="margin: 1rem 0;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                <div><strong>Download:</strong> {plan['speed_mbps']} Mbps</div>
-                <div><strong>Upload:</strong> {upload_speed} Mbps</div>
-                <div><strong>Data:</strong> {'Unlimited' if plan.get('is_unlimited') else f"{plan['data_limit_gb']} GB"}</div>
-                <div><strong>Validity:</strong> {plan['validity_days']} days</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+#     st.markdown(f"""
+#     <div class="{card_class}">
+#         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+#             <div>
+#                 <h3 style="margin: 0; color: #1f2937;">{plan['name']} {status_badge}</h3>
+#                 <p style="color: #6b7280; margin: 0.5rem 0;">{plan['description']}</p>
+#                 {f"<p style='color: #4f46e5; font-size: 0.9rem; margin: 0.5rem 0;'><strong>Features:</strong> {features_text}</p>" if features_text else ""}
+#             </div>
+#             <div style="text-align: right;">
+#                 <h2 style="margin: 0; color: #667eea;">₹{plan['price']}</h2>
+#                 <p style="color: #6b7280; margin: 0;">/month</p>
+#             </div>
+#         </div>
+#         <div style="margin: 1rem 0;">
+#             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+#                 <div><strong>Download:</strong> {plan['speed_mbps']} Mbps</div>
+#                 <div><strong>Upload:</strong> {upload_speed} Mbps</div>
+#                 <div><strong>Data:</strong> {'Unlimited' if plan.get('is_unlimited') else f"{plan['data_limit_gb']} GB"}</div>
+#                 <div><strong>Validity:</strong> {plan['validity_days']} days</div>
+#             </div>
+#         </div>
+#     </div>
+#     """, unsafe_allow_html=True)
     
-    if show_actions and not is_current:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button(f"Subscribe to {plan['name']}", key=f"sub_{plan['id']}_{current_user_id}", use_container_width=True):
-                subscribe_user_to_plan(current_user_id, plan['id'])
-                create_payment(None, current_user_id, plan['price'])
-                st.success(f"Successfully subscribed to {plan['name']}!")
-                st.rerun()
-        with col2:
-            if st.button("Add to Compare", key=f"comp_{plan['id']}_{current_user_id}", use_container_width=True):
-                if 'comparison_plans' not in st.session_state:
-                    st.session_state['comparison_plans'] = []
-                if plan['id'] not in [p['id'] for p in st.session_state['comparison_plans']]:
-                    st.session_state['comparison_plans'].append(plan)
-                    st.success(f"Added {plan['name']} to comparison!")
-                else:
-                    st.info("Plan already in comparison list!")
-        with col3:
-            if st.button("View Details", key=f"det_{plan['id']}_{current_user_id}", use_container_width=True):
-                st.session_state[f'show_plan_details_{plan["id"]}'] = True
+#     if show_actions and not is_current:
+#         col1, col2, col3 = st.columns(3)
+#         with col1:
+#             if st.button(f"Subscribe to {plan['name']}", key=f"sub_{plan['id']}_{current_user_id}", use_container_width=True):
+#                 subscribe_user_to_plan(current_user_id, plan['id'])
+#                 create_payment(None, current_user_id, plan['price'])
+#                 st.success(f"Successfully subscribed to {plan['name']}!")
+#                 st.rerun()
+#         with col2:
+#             if st.button("Add to Compare", key=f"comp_{plan['id']}_{current_user_id}", use_container_width=True):
+#                 if 'comparison_plans' not in st.session_state:
+#                     st.session_state['comparison_plans'] = []
+#                 if plan['id'] not in [p['id'] for p in st.session_state['comparison_plans']]:
+#                     st.session_state['comparison_plans'].append(plan)
+#                     st.success(f"Added {plan['name']} to comparison!")
+#                 else:
+#                     st.info("Plan already in comparison list!")
+#         with col3:
+#             if st.button("View Details", key=f"det_{plan['id']}_{current_user_id}", use_container_width=True):
+#                 st.session_state[f'show_plan_details_{plan["id"]}'] = True
 
 def render_plan_card(
     plan,
@@ -2142,6 +2142,8 @@ def render_plan_card(
                 use_container_width=True
             ):
                 st.session_state[f'show_plan_details_{plan["id"]}'] = True
+
+
 
 
 def render_expiry_reminder(reminder):
@@ -2369,13 +2371,366 @@ def render_billing_history(user_id):
 # ---------------------------
 # Enhanced User Dashboard
 # ---------------------------
+# def user_dashboard(user):
+#     st.title("🏠 My Dashboard")
+#     st.markdown(f"Welcome back, **{user['name']}**!")
+#     # Add this code in the user_dashboard function after the sidebar navigation links
+#     st.sidebar.subheader("Notifications")
+
+#     # Get unread notifications for the current user
+#     unread_notifications = get_user_notifications(user['id'], limit=5, unread_only=True)
+
+#     if unread_notifications:
+#         for notification in unread_notifications:
+#             with st.sidebar.expander(f"New: {notification['notification_type'].replace('_', ' ').title()}"):
+#                 st.write(notification['message'])
+#                 if st.button("Mark as read", key=f"mark_read_{notification['id']}"):
+#                     mark_notification_read(notification['id'])
+#                     st.rerun()  # Rerun to update the list
+#     else:
+#         st.sidebar.write("No new notifications")
+    
+#     # Check for expiry reminders first
+#     reminders = check_expiry_reminders(user['id'])
+#     for reminder in reminders:
+#         render_expiry_reminder(reminder)
+    
+#     # Get current subscription
+#     current_sub = get_user_active_subscription(user['id'])
+    
+#     # Section 1: Current Plan with Semi-circular Progress
+#     st.markdown("### 📶 Your Current Plan")
+    
+#     if current_sub:
+#         current_plan = get_plan(current_sub['plan_id'])
+        
+#         # Calculate days remaining and percentage
+#         try:
+#             start_date = datetime.fromisoformat(current_sub['start_date']).date()
+#             end_date = datetime.fromisoformat(current_sub['end_date']).date()
+#             today = datetime.utcnow().date()
+            
+#             total_days = (end_date - start_date).days
+#             days_passed = (today - start_date).days
+#             days_remaining = (end_date - today).days
+            
+#             percentage = min(100, max(0, (days_passed / total_days) * 100))
+            
+#             col1, col2 = st.columns([1, 2])
+            
+#             with col1:
+#                 fig = render_partial_circle_progress(
+#                     days_left=max(0, days_remaining),
+#                     start_date=start_date.strftime('%Y-%m-%d'),
+#                     end_date=end_date.strftime('%Y-%m-%d'),
+#                     pct_visible=80   # <-- controls how much of the circle is shown
+#                 )
+#                 st.plotly_chart(fig, use_container_width=True)
+#             with col2:
+#                 render_plan_card(current_plan, is_current=True, show_actions=False)
+
+#         except Exception as e:
+#                 render_plan_card(current_plan, is_current=True, show_actions=False)
+
+#     else:
+#         st.info("🎯 You don't have an active plan. Choose one below to get started!")        
+#             # Quick action cards row
+           
+
+#     st.markdown("""
+#             <style>
+#             # .card-container {
+#             #     transition: all 0.3s ease;
+#             # }
+
+#             # .card-container:hover {
+#             #     transform: translateY(-8px);
+#             #     box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+#             # }
+
+#             # .card-button {
+#             #     transition: all 0.3s ease;
+#             # }
+
+#             # .card-button:hover {
+#             #     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+#             #     color: white !important;
+#             #     transform: scale(1.05);
+#             # }
+
+#             .card-container {
+#                     transition: all 0.3s ease;
+#                 }
+
+#                 .card-container:hover {
+#                     transform: translateY(-8px);
+#                     box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+#                     # background: linear-gradient(135deg, #87CEEB 0%, #87CEFA 100%) !important;
+#                     background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%) !important;
+#                     border-color: #87CEEB !important;
+#                 }
+
+#                 .card-container:hover .card-title {
+#                     color: white !important;
+#                 }
+
+#                 .card-container:hover .card-icon {
+#                     filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3)) !important;
+#                 }
+
+#                 .card-button {
+#                     transition: all 0.3s ease;
+#                 }
+
+#                 .card-button:hover {
+#                     background: white !important;
+#                     color: #2563eb !important;
+#                     transform: scale(1.05);
+#                     border-color: white !important;
+#                 }
+#             </style>
+#             """, unsafe_allow_html=True)
+
+#     col1, col2, col3, col4 = st.columns(4)
+
+#     card_style = """
+#             <div class="card-container" style="
+#             background: white;
+#             border: 2px solid #f1f5f9;
+#             border-radius: 20px;
+#             padding: 2rem 1rem;
+#             text-align: center;
+#             color: #334155;
+#             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+#             height: 200px;
+#             display: flex;
+#             flex-direction: column;
+#             justify-content: center;
+#             align-items: center;
+#             margin-bottom: 1rem;
+#         ">
+#             <div style="
+#                 font-size: 2.5rem; 
+#                 margin-bottom: 0.8rem;
+#                 filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+#             ">{icon}</div>
+#             <div style="
+#                 font-size: 1.1rem; 
+#                 font-weight: 600; 
+#                 margin-bottom: 1.2rem;
+#                 color: #1e293b;
+#             ">{title}</div>
+#             <button class="card-button" style="
+#                 border: 2px solid #e2e8f0;
+#                 border-radius: 12px;
+#                 padding: 0.6rem 1.8rem;
+#                 background: #f8fafc;
+#                 color: #475569;
+#                 font-weight: 600;
+#                 cursor: pointer;
+#                 font-size: 0.9rem;
+#             ">{btn_text}</button>
+#         </div>
+#         """
+
+#     with col1:
+#         st.markdown(card_style.format(
+#                     icon="📶", 
+#                     title="My WiFi", 
+#                     btn_text="Manage"
+#                 ), unsafe_allow_html=True)
+
+#     with col2:
+#         st.markdown(card_style.format(
+#                     icon="🆕", 
+#                     title="New Connection", 
+#                     btn_text="Apply"
+#                 ), unsafe_allow_html=True)
+
+#     with col3:
+#         st.markdown(card_style.format(
+#                     icon="💳", 
+#                     title="Pay Bills", 
+#                     btn_text="Pay Now"
+#                 ), unsafe_allow_html=True)
+
+#     with col4:
+#         st.markdown(card_style.format(
+#                     icon="🛠️", 
+#                     title="Support", 
+#                     btn_text="Get Help"
+#                 ), unsafe_allow_html=True)
+
+        
+        
+#         # Usage overview for current plan
+#     st.markdown("### 📊 Usage Overview")
+#     render_usage_analytics(user['id'])
+        
+    
+
+#     st.markdown("### 📈 Usage Insights & Smart Recommendations")
+    
+#     usage_df = get_usage_for_user(user['id'], days=60)
+#     if not usage_df.empty:
+#         # Usage pattern analysis
+#         avg_daily = usage_df['data_used_gb'].mean()
+        
+#         col1, col2 = st.columns(2)
+        
+#         with col1:
+#             st.markdown("#### Usage Pattern Analysis")
+#             if avg_daily < 2:
+#                 pattern = "Light User"
+#                 recommendation = "You're a light user. Consider our Basic plans for cost savings."
+#             elif avg_daily < 5:
+#                 pattern = "Moderate User"
+#                 recommendation = "You have moderate usage. Standard plans offer good value."
+#             else:
+#                 pattern = "Heavy User"
+#                 recommendation = "You're a heavy user. Premium plans with higher limits suit you best."
+            
+#             st.info(f"**Pattern:** {pattern}")
+#             st.success(f"**Recommendation:** {recommendation}")
+        
+#         with col2:
+#             # Usage vs Plan comparison
+#             if current_sub:
+#                 current_plan = get_plan(current_sub['plan_id'])
+#                 monthly_usage = avg_daily * 30
+#                 usage_ratio = monthly_usage / current_plan['data_limit_gb'] * 100
+                
+#                 st.markdown("#### Plan Utilization")
+#                 st.progress(min(usage_ratio / 100, 1.0))
+#                 st.write(f"You're using {usage_ratio:.1f}% of your plan limit")
+                
+#                 if usage_ratio > 80:
+#                     st.warning("Consider upgrading to a higher limit plan!")
+#                 elif usage_ratio < 30:
+#                     st.info("You might save money with a lower limit plan.")
+    
+#     # Section 2: ML Recommended Plans (2 best plans)
+#     st.markdown("### 🎯 Recommended Plans for You")
+    
+#     recommended_plans = ml_recommendation_for_user(user['id'], num_recommendations=2)
+    
+#     if recommended_plans:
+#         cols = st.columns(2)
+#         for i, plan in enumerate(recommended_plans):
+#             with cols[i]:
+#                 # render_plan_card(plan, is_recommended=True, current_user_id=user['id'])
+#                 render_plan_card(
+#                                     plan,
+#                                     is_recommended=True,
+#                                     current_user_id=user['id'],
+#                                     section="recommended"
+#                                 )
+
+
+#     else:
+#         st.info("No recommendations available at the moment.")
+
+#     st.markdown("---")
+   
+    
+    
+#     # Section 3: All Available Plans
+#     st.markdown("### 📋 All Available Plans")
+    
+#     # Plan filters
+#     col1, col2, col3 = st.columns(3)
+#     with col1:
+#         price_filter = st.selectbox("Filter by Price", 
+#                                    ["All", "Under ₹500", "₹500-₹1000", "Above ₹1000"])
+#     with col2:
+#         speed_filter = st.selectbox("Filter by Speed", 
+#                                    ["All", "Up to 100 Mbps", "100-500 Mbps", "500+ Mbps"])
+#     with col3:
+#         type_filter = st.selectbox("Filter by Type",
+#                                   ["All", "Basic", "Standard", "Premium", "Elite"])
+    
+#     # Get and filter plans
+#     all_plans = get_all_plans()
+#     filtered_plans = all_plans.copy()
+    
+#     # Apply filters
+#     if price_filter != "All":
+#         if price_filter == "Under ₹500":
+#             filtered_plans = [p for p in filtered_plans if p['price'] < 500]
+#         elif price_filter == "₹500-₹1000":
+#             filtered_plans = [p for p in filtered_plans if 500 <= p['price'] <= 1000]
+#         else:
+#             filtered_plans = [p for p in filtered_plans if p['price'] > 1000]
+    
+#     if speed_filter != "All":
+#         if speed_filter == "Up to 100 Mbps":
+#             filtered_plans = [p for p in filtered_plans if p['speed_mbps'] <= 100]
+#         elif speed_filter == "100-500 Mbps":
+#             filtered_plans = [p for p in filtered_plans if 100 < p['speed_mbps'] <= 500]
+#         else:
+#             filtered_plans = [p for p in filtered_plans if p['speed_mbps'] > 500]
+    
+#     if type_filter != "All":
+#         filtered_plans = [p for p in filtered_plans if p.get('plan_type', 'basic').lower() == type_filter.lower()]
+    
+#     # Display filtered plans
+#     if filtered_plans:
+#         for plan in filtered_plans:
+#             is_current_plan = current_sub and plan['id'] == current_sub['plan_id']
+#             # render_plan_card(plan, is_current=is_current_plan, current_user_id=user['id'])
+#             render_plan_card(
+#                                 plan,
+#                                 is_current=is_current_plan,
+#                                 current_user_id=user['id'],
+#                                 section="all"
+#                             )
+
+#     else:
+#         st.warning("No plans match your filter criteria.")
+    
+#     # Section 4: Plan Comparison
+#     st.markdown("---")
+#     render_plan_comparison()
+    
+#     # Section 5: Usage Insights and Recommendations
+#     st.markdown("---")
+   
+    
+#     # Section 6: Previous Buying History
+#     # st.markdown("---")
+#     # render_billing_history(user['id'])
+
+    
+    
+#     # Additional sections for subscription history
+#     # st.markdown("---")
+#     st.markdown("### 📋 Subscription History")
+    
+#     subscription_history = get_user_subscription_history(user['id'])
+#     if subscription_history:
+#         history_data = []
+#         for sub in subscription_history:
+#             history_data.append({
+#                 'Plan': sub['plan_name'],
+#                 'Start Date': sub['start_date'],
+#                 'End Date': sub['end_date'],
+#                 'Status': sub['status'].title(),
+#                 'Price': f"₹{sub['price']}",
+#                 'Speed': f"{sub['speed_mbps']} Mbps",
+#                 'Data': f"{sub['data_limit_gb']} GB"
+#             })
+        
+#         history_df = pd.DataFrame(history_data)
+#         st.dataframe(history_df, use_container_width=True)
+#     else:
+#         st.info("No subscription history available.")
+
 def user_dashboard(user):
     st.title("🏠 My Dashboard")
     st.markdown(f"Welcome back, **{user['name']}**!")
-    # Add this code in the user_dashboard function after the sidebar navigation links
+    
+    # Add notifications in sidebar
     st.sidebar.subheader("Notifications")
-
-    # Get unread notifications for the current user
     unread_notifications = get_user_notifications(user['id'], limit=5, unread_only=True)
 
     if unread_notifications:
@@ -2384,7 +2739,7 @@ def user_dashboard(user):
                 st.write(notification['message'])
                 if st.button("Mark as read", key=f"mark_read_{notification['id']}"):
                     mark_notification_read(notification['id'])
-                    st.rerun()  # Rerun to update the list
+                    st.rerun()
     else:
         st.sidebar.write("No new notifications")
     
@@ -2393,139 +2748,48 @@ def user_dashboard(user):
     for reminder in reminders:
         render_expiry_reminder(reminder)
     
-    # Get current subscription
+    # Get current subscription for later use
     current_sub = get_user_active_subscription(user['id'])
     
-    # Section 1: Current Plan with Semi-circular Progress
-    st.markdown("### 📶 Your Current Plan")
+    # ============================================================================
+    # STATIC CARDS SECTION (Always visible at top)
+    # ============================================================================
     
-    if current_sub:
-        current_plan = get_plan(current_sub['plan_id'])
-        
-        # Calculate days remaining and percentage
-        try:
-            start_date = datetime.fromisoformat(current_sub['start_date']).date()
-            end_date = datetime.fromisoformat(current_sub['end_date']).date()
-            today = datetime.utcnow().date()
-            
-            total_days = (end_date - start_date).days
-            days_passed = (today - start_date).days
-            days_remaining = (end_date - today).days
-            
-            percentage = min(100, max(0, (days_passed / total_days) * 100))
-            
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                fig = render_partial_circle_progress(
-                    days_left=max(0, days_remaining),
-                    start_date=start_date.strftime('%Y-%m-%d'),
-                    end_date=end_date.strftime('%Y-%m-%d'),
-                    pct_visible=80   # <-- controls how much of the circle is shown
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            with col2:
-                render_plan_card(current_plan, is_current=True, show_actions=False)
-
-        except Exception as e:
-                render_plan_card(current_plan, is_current=True, show_actions=False)
-
-    else:
-        st.info("🎯 You don't have an active plan. Choose one below to get started!")        
-            # Quick action cards row
-            # Quick action cards row
-            # col1, col2, col3, col4 = st.columns(4)
-
-            # card_style = """
-            # <div style="
-            #     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            #     border-radius: 16px;
-            #     padding: 2rem 1rem;
-            #     text-align: center;
-            #     color: white;
-            #     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            #     height: 180px;
-            #     display: flex;
-            #     flex-direction: column;
-            #     justify-content: center;
-            #     align-items: center;
-            # ">
-            #     <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem;">{title}</div>
-            #     <button style="
-            #         border: none;
-            #         border-radius: 8px;
-            #         padding: 0.5rem 1.5rem;
-            #         background: white;
-            #         color: #4f46e5;
-            #         font-weight: 600;
-            #         cursor: pointer;
-            #     ">{btn_text}</button>
-            # </div>
-            # """
-
-            # with col1:
-            #     st.markdown(card_style.format(title="📶 My WiFi", btn_text="Manage"), unsafe_allow_html=True)
-
-            # with col2:
-            #     st.markdown(card_style.format(title="🆕 New Connection", btn_text="Apply"), unsafe_allow_html=True)
-
-            # with col3:
-            #     st.markdown(card_style.format(title="💳 Pay Bills", btn_text="Pay Now"), unsafe_allow_html=True)
-
-            # with col4:
-            #     st.markdown(card_style.format(title="🛠️ Support", btn_text="Get Help"), unsafe_allow_html=True)
-
+    st.markdown("---")
+    st.markdown("### 🎛️ Quick Actions")
+    
+    # CSS for card styling
     st.markdown("""
             <style>
-            # .card-container {
-            #     transition: all 0.3s ease;
-            # }
-
-            # .card-container:hover {
-            #     transform: translateY(-8px);
-            #     box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
-            # }
-
-            # .card-button {
-            #     transition: all 0.3s ease;
-            # }
-
-            # .card-button:hover {
-            #     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            #     color: white !important;
-            #     transform: scale(1.05);
-            # }
-
             .card-container {
-                    transition: all 0.3s ease;
-                }
+                transition: all 0.3s ease;
+            }
 
-                .card-container:hover {
-                    transform: translateY(-8px);
-                    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
-                    # background: linear-gradient(135deg, #87CEEB 0%, #87CEFA 100%) !important;
-                    background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%) !important;
-                    border-color: #87CEEB !important;
-                }
+            .card-container:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+                background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%) !important;
+                border-color: #87CEEB !important;
+            }
 
-                .card-container:hover .card-title {
-                    color: white !important;
-                }
+            .card-container:hover .card-title {
+                color: white !important;
+            }
 
-                .card-container:hover .card-icon {
-                    filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3)) !important;
-                }
+            .card-container:hover .card-icon {
+                filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3)) !important;
+            }
 
-                .card-button {
-                    transition: all 0.3s ease;
-                }
+            .card-button {
+                transition: all 0.3s ease;
+            }
 
-                .card-button:hover {
-                    background: white !important;
-                    color: #2563eb !important;
-                    transform: scale(1.05);
-                    border-color: white !important;
-                }
+            .card-button:hover {
+                background: white !important;
+                color: #2563eb !important;
+                transform: scale(1.05);
+                border-color: white !important;
+            }
             </style>
             """, unsafe_allow_html=True)
 
@@ -2599,207 +2863,241 @@ def user_dashboard(user):
                     btn_text="Get Help"
                 ), unsafe_allow_html=True)
 
-        
-        
-        # Usage overview for current plan
-    st.markdown("### 📊 Usage Overview")
-    render_usage_analytics(user['id'])
-        
-    
-
-    st.markdown("### 📈 Usage Insights & Smart Recommendations")
-    
-    usage_df = get_usage_for_user(user['id'], days=60)
-    if not usage_df.empty:
-        # Usage pattern analysis
-        avg_daily = usage_df['data_used_gb'].mean()
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Usage Pattern Analysis")
-            if avg_daily < 2:
-                pattern = "Light User"
-                recommendation = "You're a light user. Consider our Basic plans for cost savings."
-            elif avg_daily < 5:
-                pattern = "Moderate User"
-                recommendation = "You have moderate usage. Standard plans offer good value."
-            else:
-                pattern = "Heavy User"
-                recommendation = "You're a heavy user. Premium plans with higher limits suit you best."
-            
-            st.info(f"**Pattern:** {pattern}")
-            st.success(f"**Recommendation:** {recommendation}")
-        
-        with col2:
-            # Usage vs Plan comparison
-            if current_sub:
-                current_plan = get_plan(current_sub['plan_id'])
-                monthly_usage = avg_daily * 30
-                usage_ratio = monthly_usage / current_plan['data_limit_gb'] * 100
-                
-                st.markdown("#### Plan Utilization")
-                st.progress(min(usage_ratio / 100, 1.0))
-                st.write(f"You're using {usage_ratio:.1f}% of your plan limit")
-                
-                if usage_ratio > 80:
-                    st.warning("Consider upgrading to a higher limit plan!")
-                elif usage_ratio < 30:
-                    st.info("You might save money with a lower limit plan.")
-    
-    # Section 2: ML Recommended Plans (2 best plans)
-    st.markdown("### 🎯 Recommended Plans for You")
-    
-    recommended_plans = ml_recommendation_for_user(user['id'], num_recommendations=2)
-    
-    if recommended_plans:
-        cols = st.columns(2)
-        for i, plan in enumerate(recommended_plans):
-            with cols[i]:
-                # render_plan_card(plan, is_recommended=True, current_user_id=user['id'])
-                render_plan_card(
-                                    plan,
-                                    is_recommended=True,
-                                    current_user_id=user['id'],
-                                    section="recommended"
-                                )
-
-
-    else:
-        st.info("No recommendations available at the moment.")
-
     st.markdown("---")
-    # st.markdown("### 📈 Usage Insights & Smart Recommendations")
     
-    # usage_df = get_usage_for_user(user['id'], days=60)
-    # if not usage_df.empty:
-    #     # Usage pattern analysis
-    #     avg_daily = usage_df['data_used_gb'].mean()
-        
-    #     col1, col2 = st.columns(2)
-        
-    #     with col1:
-    #         st.markdown("#### Usage Pattern Analysis")
-    #         if avg_daily < 2:
-    #             pattern = "Light User"
-    #             recommendation = "You're a light user. Consider our Basic plans for cost savings."
-    #         elif avg_daily < 5:
-    #             pattern = "Moderate User"
-    #             recommendation = "You have moderate usage. Standard plans offer good value."
-    #         else:
-    #             pattern = "Heavy User"
-    #             recommendation = "You're a heavy user. Premium plans with higher limits suit you best."
-            
-    #         st.info(f"**Pattern:** {pattern}")
-    #         st.success(f"**Recommendation:** {recommendation}")
-        
-    #     with col2:
-    #         # Usage vs Plan comparison
-    #         if current_sub:
-    #             current_plan = get_plan(current_sub['plan_id'])
-    #             monthly_usage = avg_daily * 30
-    #             usage_ratio = monthly_usage / current_plan['data_limit_gb'] * 100
-                
-    #             st.markdown("#### Plan Utilization")
-    #             st.progress(min(usage_ratio / 100, 1.0))
-    #             st.write(f"You're using {usage_ratio:.1f}% of your plan limit")
-                
-    #             if usage_ratio > 80:
-    #                 st.warning("Consider upgrading to a higher limit plan!")
-    #             elif usage_ratio < 30:
-    #                 st.info("You might save money with a lower limit plan.")
+    # ============================================================================
+    # SECTION TABS/NAVIGATION
+    # ============================================================================
     
+    # Initialize session state for active section if not exists
+    if 'active_section' not in st.session_state:
+        st.session_state.active_section = 'current_plan'
     
-    # Section 3: All Available Plans
-    st.markdown("### 📋 All Available Plans")
+    # Section buttons
+    st.markdown("### 📋 Dashboard Sections")
+    col1, col2, col3, col4, col5 = st.columns(5)
     
-    # Plan filters
-    col1, col2, col3 = st.columns(3)
     with col1:
-        price_filter = st.selectbox("Filter by Price", 
-                                   ["All", "Under ₹500", "₹500-₹1000", "Above ₹1000"])
+        if st.button("📶 Current Plan", use_container_width=True, 
+                    type="primary" if st.session_state.active_section == 'current_plan' else "secondary"):
+            st.session_state.active_section = 'current_plan'
+    
     with col2:
-        speed_filter = st.selectbox("Filter by Speed", 
-                                   ["All", "Up to 100 Mbps", "100-500 Mbps", "500+ Mbps"])
+        if st.button("📊 Data Usage Insights", use_container_width=True,
+                    type="primary" if st.session_state.active_section == 'data_usage' else "secondary"):
+            st.session_state.active_section = 'data_usage'
+    
     with col3:
-        type_filter = st.selectbox("Filter by Type",
-                                  ["All", "Basic", "Standard", "Premium", "Elite"])
+        if st.button("📋 All Plans", use_container_width=True,
+                    type="primary" if st.session_state.active_section == 'all_plans' else "secondary"):
+            st.session_state.active_section = 'all_plans'
     
-    # Get and filter plans
-    all_plans = get_all_plans()
-    filtered_plans = all_plans.copy()
+    with col4:
+        if st.button("⚖️ Compare Plans", use_container_width=True,
+                    type="primary" if st.session_state.active_section == 'compare_plans' else "secondary"):
+            st.session_state.active_section = 'compare_plans'
     
-    # Apply filters
-    if price_filter != "All":
-        if price_filter == "Under ₹500":
-            filtered_plans = [p for p in filtered_plans if p['price'] < 500]
-        elif price_filter == "₹500-₹1000":
-            filtered_plans = [p for p in filtered_plans if 500 <= p['price'] <= 1000]
-        else:
-            filtered_plans = [p for p in filtered_plans if p['price'] > 1000]
+    with col5:
+        if st.button("📋 Subscription History", use_container_width=True,
+                    type="primary" if st.session_state.active_section == 'subscription_history' else "secondary"):
+            st.session_state.active_section = 'subscription_history'
     
-    if speed_filter != "All":
-        if speed_filter == "Up to 100 Mbps":
-            filtered_plans = [p for p in filtered_plans if p['speed_mbps'] <= 100]
-        elif speed_filter == "100-500 Mbps":
-            filtered_plans = [p for p in filtered_plans if 100 < p['speed_mbps'] <= 500]
-        else:
-            filtered_plans = [p for p in filtered_plans if p['speed_mbps'] > 500]
-    
-    if type_filter != "All":
-        filtered_plans = [p for p in filtered_plans if p.get('plan_type', 'basic').lower() == type_filter.lower()]
-    
-    # Display filtered plans
-    if filtered_plans:
-        for plan in filtered_plans:
-            is_current_plan = current_sub and plan['id'] == current_sub['plan_id']
-            # render_plan_card(plan, is_current=is_current_plan, current_user_id=user['id'])
-            render_plan_card(
-                                plan,
-                                is_current=is_current_plan,
-                                current_user_id=user['id'],
-                                section="all"
-                            )
-
-    else:
-        st.warning("No plans match your filter criteria.")
-    
-    # Section 4: Plan Comparison
     st.markdown("---")
-    render_plan_comparison()
     
-    # Section 5: Usage Insights and Recommendations
-    st.markdown("---")
-   
+    # ============================================================================
+    # SECTION CONTENT BASED ON SELECTION
+    # ============================================================================
     
-    # Section 6: Previous Buying History
-    # st.markdown("---")
-    # render_billing_history(user['id'])
-
-    
-    
-    # Additional sections for subscription history
-    # st.markdown("---")
-    st.markdown("### 📋 Subscription History")
-    
-    subscription_history = get_user_subscription_history(user['id'])
-    if subscription_history:
-        history_data = []
-        for sub in subscription_history:
-            history_data.append({
-                'Plan': sub['plan_name'],
-                'Start Date': sub['start_date'],
-                'End Date': sub['end_date'],
-                'Status': sub['status'].title(),
-                'Price': f"₹{sub['price']}",
-                'Speed': f"{sub['speed_mbps']} Mbps",
-                'Data': f"{sub['data_limit_gb']} GB"
-            })
+    # CURRENT PLAN SECTION (Default)
+    if st.session_state.active_section == 'current_plan':
+        st.markdown("## 📶 Your Current Plan")
         
-        history_df = pd.DataFrame(history_data)
-        st.dataframe(history_df, use_container_width=True)
-    else:
-        st.info("No subscription history available.")
+        if current_sub:
+            current_plan = get_plan(current_sub['plan_id'])
+            
+            # Calculate days remaining and percentage
+            try:
+                start_date = datetime.fromisoformat(current_sub['start_date']).date()
+                end_date = datetime.fromisoformat(current_sub['end_date']).date()
+                today = datetime.utcnow().date()
+                
+                total_days = (end_date - start_date).days
+                days_passed = (today - start_date).days
+                days_remaining = (end_date - today).days
+                
+                percentage = min(100, max(0, (days_passed / total_days) * 100))
+                
+                col1, col2 = st.columns([1, 2])
+                
+                with col1:
+                    fig = render_partial_circle_progress(
+                        days_left=max(0, days_remaining),
+                        start_date=start_date.strftime('%Y-%m-%d'),
+                        end_date=end_date.strftime('%Y-%m-%d'),
+                        pct_visible=80
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                with col2:
+                    render_plan_card(current_plan, is_current=True, show_actions=False)
+
+            except Exception as e:
+                render_plan_card(current_plan, is_current=True, show_actions=False)
+
+        else:
+            st.info("🎯 You don't have an active plan. Choose one below to get started!")
+        
+        # ML Recommendations Section (part of current plan section)
+        st.markdown("---")
+        st.markdown("### 🎯 Recommended Plans for You")
+        
+        recommended_plans = ml_recommendation_for_user(user['id'], num_recommendations=2)
+        
+        if recommended_plans:
+            cols = st.columns(2)
+            for i, plan in enumerate(recommended_plans):
+                with cols[i]:
+                    render_plan_card(
+                        plan,
+                        is_recommended=True,
+                        current_user_id=user['id'],
+                        section="recommended"
+                    )
+        else:
+            st.info("No recommendations available at the moment.")
+    
+    # DATA USAGE INSIGHTS SECTION
+    elif st.session_state.active_section == 'data_usage':
+        st.markdown("## 📊 Data Usage Insights")
+        
+        # Usage overview
+        st.markdown("### 📈 Usage Overview")
+        render_usage_analytics(user['id'])
+        
+        st.markdown("---")
+        st.markdown("### 📈 Usage Insights & Smart Recommendations")
+        
+        usage_df = get_usage_for_user(user['id'], days=60)
+        if not usage_df.empty:
+            # Usage pattern analysis
+            avg_daily = usage_df['data_used_gb'].mean()
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("#### Usage Pattern Analysis")
+                if avg_daily < 2:
+                    pattern = "Light User"
+                    recommendation = "You're a light user. Consider our Basic plans for cost savings."
+                elif avg_daily < 5:
+                    pattern = "Moderate User"
+                    recommendation = "You have moderate usage. Standard plans offer good value."
+                else:
+                    pattern = "Heavy User"
+                    recommendation = "You're a heavy user. Premium plans with higher limits suit you best."
+                
+                st.info(f"**Pattern:** {pattern}")
+                st.success(f"**Recommendation:** {recommendation}")
+            
+            with col2:
+                # Usage vs Plan comparison
+                if current_sub:
+                    current_plan = get_plan(current_sub['plan_id'])
+                    monthly_usage = avg_daily * 30
+                    usage_ratio = monthly_usage / current_plan['data_limit_gb'] * 100
+                    
+                    st.markdown("#### Plan Utilization")
+                    st.progress(min(usage_ratio / 100, 1.0))
+                    st.write(f"You're using {usage_ratio:.1f}% of your plan limit")
+                    
+                    if usage_ratio > 80:
+                        st.warning("Consider upgrading to a higher limit plan!")
+                    elif usage_ratio < 30:
+                        st.info("You might save money with a lower limit plan.")
+        else:
+            st.info("No usage data available for analysis.")
+    
+    # ALL PLANS SECTION
+    elif st.session_state.active_section == 'all_plans':
+        st.markdown("## 📋 All Available Plans")
+        
+        # Plan filters
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            price_filter = st.selectbox("Filter by Price", 
+                                       ["All", "Under ₹500", "₹500-₹1000", "Above ₹1000"])
+        with col2:
+            speed_filter = st.selectbox("Filter by Speed", 
+                                       ["All", "Up to 100 Mbps", "100-500 Mbps", "500+ Mbps"])
+        with col3:
+            type_filter = st.selectbox("Filter by Type",
+                                      ["All", "Basic", "Standard", "Premium", "Elite"])
+        
+        # Get and filter plans
+        all_plans = get_all_plans()
+        filtered_plans = all_plans.copy()
+        
+        # Apply filters
+        if price_filter != "All":
+            if price_filter == "Under ₹500":
+                filtered_plans = [p for p in filtered_plans if p['price'] < 500]
+            elif price_filter == "₹500-₹1000":
+                filtered_plans = [p for p in filtered_plans if 500 <= p['price'] <= 1000]
+            else:
+                filtered_plans = [p for p in filtered_plans if p['price'] > 1000]
+        
+        if speed_filter != "All":
+            if speed_filter == "Up to 100 Mbps":
+                filtered_plans = [p for p in filtered_plans if p['speed_mbps'] <= 100]
+            elif speed_filter == "100-500 Mbps":
+                filtered_plans = [p for p in filtered_plans if 100 < p['speed_mbps'] <= 500]
+            else:
+                filtered_plans = [p for p in filtered_plans if p['speed_mbps'] > 500]
+        
+        if type_filter != "All":
+            filtered_plans = [p for p in filtered_plans if p.get('plan_type', 'basic').lower() == type_filter.lower()]
+        
+        # Display filtered plans
+        if filtered_plans:
+            for plan in filtered_plans:
+                is_current_plan = current_sub and plan['id'] == current_sub['plan_id']
+                render_plan_card(
+                    plan,
+                    is_current=is_current_plan,
+                    current_user_id=user['id'],
+                    section="all"
+                )
+        else:
+            st.warning("No plans match your filter criteria.")
+    
+    # COMPARE PLANS SECTION
+    elif st.session_state.active_section == 'compare_plans':
+        st.markdown("## ⚖️ Compare Plans")
+        render_plan_comparison()
+    
+    # SUBSCRIPTION HISTORY SECTION
+    elif st.session_state.active_section == 'subscription_history':
+        st.markdown("## 📋 Subscription History")
+        
+        subscription_history = get_user_subscription_history(user['id'])
+        if subscription_history:
+            history_data = []
+            for sub in subscription_history:
+                history_data.append({
+                    'Plan': sub['plan_name'],
+                    'Start Date': sub['start_date'],
+                    'End Date': sub['end_date'],
+                    'Status': sub['status'].title(),
+                    'Price': f"₹{sub['price']}",
+                    'Speed': f"{sub['speed_mbps']} Mbps",
+                    'Data': f"{sub['data_limit_gb']} GB"
+                })
+            
+            history_df = pd.DataFrame(history_data)
+            st.dataframe(history_df, use_container_width=True)
+        else:
+            st.info("No subscription history available.")
+
 
 # ---------------------------
 # Enhanced Admin Dashboard
