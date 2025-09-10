@@ -2424,67 +2424,188 @@ def user_dashboard(user):
                     pct_visible=80   # <-- controls how much of the circle is shown
                 )
                 st.plotly_chart(fig, use_container_width=True)
-
-
-
-            
             with col2:
                 render_plan_card(current_plan, is_current=True, show_actions=False)
-            
-            # Quick action cards row
-            # Quick action cards row
-            col1, col2, col3, col4 = st.columns(4)
-
-            card_style = """
-            <div style="
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 16px;
-                padding: 2rem 1rem;
-                text-align: center;
-                color: white;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                height: 180px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            ">
-                <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem;">{title}</div>
-                <button style="
-                    border: none;
-                    border-radius: 8px;
-                    padding: 0.5rem 1.5rem;
-                    background: white;
-                    color: #4f46e5;
-                    font-weight: 600;
-                    cursor: pointer;
-                ">{btn_text}</button>
-            </div>
-            """
-
-            with col1:
-                st.markdown(card_style.format(title="📶 My WiFi", btn_text="Manage"), unsafe_allow_html=True)
-
-            with col2:
-                st.markdown(card_style.format(title="🆕 New Connection", btn_text="Apply"), unsafe_allow_html=True)
-
-            with col3:
-                st.markdown(card_style.format(title="💳 Pay Bills", btn_text="Pay Now"), unsafe_allow_html=True)
-
-            with col4:
-                st.markdown(card_style.format(title="🛠️ Support", btn_text="Get Help"), unsafe_allow_html=True)
-
-
 
         except Exception as e:
-            render_plan_card(current_plan, is_current=True, show_actions=False)
+                render_plan_card(current_plan, is_current=True, show_actions=False)
+
+    else:
+        st.info("🎯 You don't have an active plan. Choose one below to get started!")        
+            # Quick action cards row
+            # Quick action cards row
+            # col1, col2, col3, col4 = st.columns(4)
+
+            # card_style = """
+            # <div style="
+            #     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            #     border-radius: 16px;
+            #     padding: 2rem 1rem;
+            #     text-align: center;
+            #     color: white;
+            #     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            #     height: 180px;
+            #     display: flex;
+            #     flex-direction: column;
+            #     justify-content: center;
+            #     align-items: center;
+            # ">
+            #     <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem;">{title}</div>
+            #     <button style="
+            #         border: none;
+            #         border-radius: 8px;
+            #         padding: 0.5rem 1.5rem;
+            #         background: white;
+            #         color: #4f46e5;
+            #         font-weight: 600;
+            #         cursor: pointer;
+            #     ">{btn_text}</button>
+            # </div>
+            # """
+
+            # with col1:
+            #     st.markdown(card_style.format(title="📶 My WiFi", btn_text="Manage"), unsafe_allow_html=True)
+
+            # with col2:
+            #     st.markdown(card_style.format(title="🆕 New Connection", btn_text="Apply"), unsafe_allow_html=True)
+
+            # with col3:
+            #     st.markdown(card_style.format(title="💳 Pay Bills", btn_text="Pay Now"), unsafe_allow_html=True)
+
+            # with col4:
+            #     st.markdown(card_style.format(title="🛠️ Support", btn_text="Get Help"), unsafe_allow_html=True)
+
+    st.markdown("""
+            <style>
+            # .card-container {
+            #     transition: all 0.3s ease;
+            # }
+
+            # .card-container:hover {
+            #     transform: translateY(-8px);
+            #     box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+            # }
+
+            # .card-button {
+            #     transition: all 0.3s ease;
+            # }
+
+            # .card-button:hover {
+            #     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            #     color: white !important;
+            #     transform: scale(1.05);
+            # }
+
+            .card-container {
+                    transition: all 0.3s ease;
+                }
+
+                .card-container:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+                    # background: linear-gradient(135deg, #87CEEB 0%, #87CEFA 100%) !important;
+                    background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%) !important;
+                    border-color: #87CEEB !important;
+                }
+
+                .card-container:hover .card-title {
+                    color: white !important;
+                }
+
+                .card-container:hover .card-icon {
+                    filter: drop-shadow(0 2px 4px rgba(255,255,255,0.3)) !important;
+                }
+
+                .card-button {
+                    transition: all 0.3s ease;
+                }
+
+                .card-button:hover {
+                    background: white !important;
+                    color: #2563eb !important;
+                    transform: scale(1.05);
+                    border-color: white !important;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    card_style = """
+            <div class="card-container" style="
+            background: white;
+            border: 2px solid #f1f5f9;
+            border-radius: 20px;
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #334155;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+        ">
+            <div style="
+                font-size: 2.5rem; 
+                margin-bottom: 0.8rem;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            ">{icon}</div>
+            <div style="
+                font-size: 1.1rem; 
+                font-weight: 600; 
+                margin-bottom: 1.2rem;
+                color: #1e293b;
+            ">{title}</div>
+            <button class="card-button" style="
+                border: 2px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 0.6rem 1.8rem;
+                background: #f8fafc;
+                color: #475569;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 0.9rem;
+            ">{btn_text}</button>
+        </div>
+        """
+
+    with col1:
+        st.markdown(card_style.format(
+                    icon="📶", 
+                    title="My WiFi", 
+                    btn_text="Manage"
+                ), unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(card_style.format(
+                    icon="🆕", 
+                    title="New Connection", 
+                    btn_text="Apply"
+                ), unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(card_style.format(
+                    icon="💳", 
+                    title="Pay Bills", 
+                    btn_text="Pay Now"
+                ), unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(card_style.format(
+                    icon="🛠️", 
+                    title="Support", 
+                    btn_text="Get Help"
+                ), unsafe_allow_html=True)
+
+        
         
         # Usage overview for current plan
-        st.markdown("### 📊 Usage Overview")
-        render_usage_analytics(user['id'])
+    st.markdown("### 📊 Usage Overview")
+    render_usage_analytics(user['id'])
         
-    else:
-        st.info("🎯 You don't have an active plan. Choose one below to get started!")
+    
 
     st.markdown("### 📈 Usage Insights & Smart Recommendations")
     
